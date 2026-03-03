@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile 3D Carousel - BD Legends</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-glow: #8a2be2;
+            --accent-cyan: #00d4ff;
+            --bg-color: #020205;
+            --card-w: 200px;
+            --card-h: 300px;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: 'Hind Siliguri', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* App-like feel */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Constrain view to mobile proportions even on desktop */
+        .mobile-container {
+            width: 100%;
+            max-width: 450px;
+            height: 100vh;
+            position: relative;
+            background: var(--bg-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 100px rgba(0,0,0,0.5);
+            border-left: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Background Effects */
+        .bg-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150%;
+            height: 150%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(138, 43, 226, 0.15), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(0, 212, 255, 0.15), transparent 40%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Header */
+        header {
+            padding: 40px 25px 20px;
+            z-index: 10;
+        }
+
+        .title-line {
+            width: 3px;
+            height: 40px;
+            background: var(--accent-cyan);
+            float: left;
+            margin-right: 12px;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .title-main {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            line-height: 1;
+            color: var(--accent-cyan);
+        }
+
+        /* 3D Scene */
+        .scene {
+            flex: 1;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            transition: opacity 0.4s ease, filter 0.4s ease;
+        }
+
+        .carousel {
+            width: var(--card-w);
+            height: var(--card-h);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            background: linear-gradient(165deg, rgba(30, 30, 50, 0.95), rgba(10, 10, 15, 1));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            backface-visibility: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+
+        .card.active {
+            border: 1.5px solid var(--primary-glow);
+            box-shadow: 0 0 30px rgba(138, 43, 226, 0.4);
+        }
+
+        /* Detail Overlay */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+        }
+
+        #overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .detail-body {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding-bottom: 50px;
+        }
+
+        .detail-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .detail-body::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 10px;
+        }
+
+        .close-btn {
+            align-self: flex-end;
+            padding: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            cursor: pointer;
+        }
+
+        /* Decorative Code Bits */
+        .code-snippet {
+            position: absolute;
+            font-family: monospace;
+            font-size: 0.6rem;
+            color: rgba(0, 212, 255, 0.2);
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-container">
+        <div class="bg-glow"></div>
+        
+        <!-- Background decorative text -->
+        <div class="code-snippet top-20 right-5">while(learning) { <br>&nbsp;&nbsp;improve();<br>}</div>
+        <div class="code-snippet bottom-20 left-5">const legends = true;<br>export default Bangladesh;</div>
+
+        <header id="header">
+            <div class="title-line"></div>
+            <div class="title-main">BD Legends<br><span class="text-sm font-sans italic text-gray-400">Personalities & Contribution</span></div>
+        </header>
+
+        <div class="scene" id="scene">
+            <div class="carousel" id="carousel">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+
+        <div id="overlay">
+            <div class="close-btn" onclick="closeDetail()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </div>
+            <div id="detailContent">
+                <p class="text-pink-500 font-bold uppercase tracking-widest text-xs mb-1" id="overlayRole">CATEGORY</p>
+                <h2 class="text-3xl font-bold text-white mb-6 leading-tight" id="overlayName">Name</h2>
+                <div class="detail-body">
+                    <p class="text-gray-300 text-lg leading-relaxed" id="overlayDesc"></p>
+                    <div class="h-1 w-20 bg-cyan-500 mt-10 opacity-50"></div>
+                    <p class="mt-4 text-xs font-mono text-gray-500">DIGITAL ARCHIVE // BD_LEGEND_ID</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const personalities = [
+            { name: "বঙ্গবন্ধু শেখ মুজিবুর রহমান", role: "জাতির পিতা", desc: "স্বাধীন বাংলাদেশের স্থপতি এবং হাজার বছরের শ্রেষ্ঠ বাঙালি। তাঁর বলিষ্ঠ নেতৃত্বে ১৯৭১ সালে বাংলাদেশ একটি স্বাধীন রাষ্ট্র হিসেবে আত্মপ্রকাশ করে। তাঁর ঐতিহাসিক ৭ই মার্চের ভাষণ ইউনেস্কো কর্তৃক বিশ্ব ঐতিহ্যের অংশ হিসেবে স্বীকৃত। তিনি শুধু একজন নেতা নন, তিনি বাঙালির মুক্তির প্রতীক।" },
+            { name: "কাজী নজরুল ইসলাম", role: "জাতীয় কবি", desc: "বাংলা সাহিত্যের অন্যতম প্রধান কবি ও সঙ্গীতজ্ঞ। তাঁর কবিতা ও গান পরাধীনতা ও শোষণের বিরুদ্ধে লড়াইয়ের প্রেরণা যোগায়। তিনি সাম্যের কবি, যিনি হিন্দু-মুসলিম ঐক্যের গান গেয়েছেন। তাঁর রচিত রণসংগীত আজও বাংলাদেশের প্রতিটি জাতীয় দিবসে অনুপ্রেরণা যোগায়।" },
+            { name: "বেগম রোকেয়া", role: "নারী জাগরণ", desc: "বাঙালি মুসলিম নারী জাগরণের অগ্রদূত। যখন সমাজ নারীদের শিক্ষার বিরোধী ছিল, তখন তিনি জীবনের ঝুঁকি নিয়ে নারী শিক্ষা প্রসারে কাজ করেছেন। তাঁর লেখনী সমাজ সংস্কারে এক অনন্য ভূমিকা পালন করেছে। 'সুলতানার স্বপ্ন' তাঁর বিশ্ববিখ্যাত রচনা।" },
+            { name: "তাজউদ্দীন আহমদ", role: "প্রথম প্রধানমন্ত্রী", desc: "মুক্তিযুদ্ধের সময় গঠিত গণপ্রজাতন্ত্রী বাংলাদেশ সরকারের প্রথম প্রধানমন্ত্রী। তাঁর বলিষ্ঠ ও দক্ষ নেতৃত্বে মুক্তিযুদ্ধ একটি চূড়ান্ত বিজয়ের দিকে এগিয়ে যায়। অত্যন্ত বিনয়ী এবং প্রখর ধীমান এই নেতা বাংলাদেশের স্বাধীনতা সংগ্রামের অন্যতম প্রধান কারিগর।" },
+            { name: "ড. মুহাম্মদ ইউনূস", role: "নোবেল বিজয়ী", desc: "ক্ষুদ্রঋণ ও গ্রামীণ ব্যাংকের প্রতিষ্ঠাতা। ২০০৬ সালে শান্তিতে নোবেল পুরস্কার লাভ করেন। তাঁর উদ্ভাবিত 'সামাজিক ব্যবসা' এবং দারিদ্র্য বিমোচনের মডেল সারা বিশ্বে অত্যন্ত জনপ্রিয়। তিনি বাংলাদেশের গৌরব বিশ্বমঞ্চে উজ্জ্বল করেছেন।" },
+            { name: "জয়নুল আবেদিন", role: "শিল্পাচার্য", desc: "বাংলাদেশের আধুনিক চিত্রকলার জনক। ১৯৪৩ সালের দুর্ভিক্ষের উপর তাঁর আঁকা ছবিগুলো বিশ্বব্যাপী সমাদৃত। তিনি সোনারগাঁওয়ে লোকশিল্প জাদুঘর এবং ঢাকায় চারুকলা ইনস্টিটিউট প্রতিষ্ঠা করে শিল্পচর্চার পথ প্রশস্ত করেছেন।" },
+            { name: "স্যার জগদীশ চন্দ্র বসু", role: "বিজ্ঞানী", desc: "রেডিও তরঙ্গ আবিষ্কারের পথপ্রদর্শক এবং উদ্ভিদের যে প্রাণ আছে তা প্রমাণকারী বিশ্বখ্যাত বিজ্ঞানী। বিজ্ঞানের জয়যাত্রায় তাঁর মৌলিক অবদান আজ বিশ্বস্বীকৃত। তিনি বাঙালি মেধাকে বিশ্বের দরবারে অনন্য উচ্চতায় নিয়ে গেছেন।" },
+            { name: "মওলানা ভাসানী", role: "জননেতা", desc: "মজলুম জননেতা হিসেবে পরিচিত। সারাজীবন শোষিত ও বঞ্চিত মানুষের অধিকার আদায়ের সংগ্রামে নেতৃত্ব দিয়েছেন। তাঁর রাজনৈতিক দর্শন এবং আপোষহীন মনোভাব এদেশের প্রতিটি গণতান্ত্রিক আন্দোলনে প্রেরণা জুগিয়েছে।" },
+            { name: "হুমায়ূন আহমেদ", role: "কথাসাহিত্যিক", desc: "বিংশ শতাব্দীর জনপ্রিয়তম বাঙালি লেখক। তিনি মধ্যবিত্ত বাঙালির প্রাত্যহিক জীবনের ছোট ছোট সুখ-দুঃখের গল্পকে অত্যন্ত সাবলীল ভাষায় ফুটিয়ে তুলেছেন। তাঁর কালজয়ী চরিত্র হিমু ও মিসির আলি আজও কোটি পাঠকের পছন্দের।" },
+            { name: "সাকিব আল হাসান", role: "ক্রিকেটার", desc: "বিশ্বের অন্যতম সেরা অলরাউন্ডার। বাংলাদেশ ক্রিকেটকে বিশ্বমঞ্চে এক নতুন উচ্চতায় নিয়ে গেছেন তিনি। দীর্ঘ সময় ধরে আইসিসি র‍্যাঙ্কিংয়ে শ্রেষ্ঠত্ব বজায় রেখে তিনি প্রমাণ করেছেন বাঙালিরা খেলাধুলাতেও বিশ্বসেরা হতে পারে।" },
+            { name: "এ. কে. ফজলুল হক", role: "শেরেবাংলা", desc: "অবিভক্ত বাংলার প্রথম প্রধানমন্ত্রী এবং গণমানুষের নেতা। বাংলার দরিদ্র কৃষকদের ঋণের কবল থেকে মুক্ত করতে তাঁর অবদান চিরস্মরণীয়। তাঁর সাহসিকতা ও জনগণের প্রতি ভালোবাসার কারণে তিনি 'বাংলার বাঘ' বা শেরেবাংলা উপাধিতে ভূষিত হন।" },
+            { name: "এফ আর খান", role: "স্থপতি", desc: "আধুনিক গগনচুম্বী ভবন নির্মাণের জাদুকর। শিকাগোর 'সিয়ার্স টাওয়ার' নির্মাণের মাধ্যমে তিনি বিশ্বব্যাপী স্থাপত্যবিদ্যায় এক নতুন বিপ্লব আনেন। তাঁকে বলা হয় 'আইনস্টাইন অফ স্ট্রাকচারাল ইঞ্জিনিয়ারিং'।" },
+            { name: "জাহানারা ইমাম", role: "শহীদ জননী", desc: "মুক্তিযুদ্ধের চেতনা বাস্তবায়ন এবং ঘাতক দালাল নির্মূল আন্দোলনের প্রধান নেত্রী। তাঁর 'একাত্তরের দিনগুলি' গ্রন্থটি মুক্তিযুদ্ধের এক অমর দলিল। তিনি আমৃত্যু যুদ্ধাপরাধীদের বিচারের দাবিতে আন্দোলন করেছেন।" },
+            { name: "তারেক মাসুদ", role: "চলচ্চিত্রকার", desc: "বাংলাদেশের প্রখ্যাত চলচ্চিত্র নির্মাতা। তাঁর 'মাটির ময়না' চলচ্চিত্রটি কান চলচ্চিত্র উৎসবে বিশেষ সম্মাননা লাভ করে। তিনি বাংলা সিনেমাকে বিশ্ব দরবারে নতুন করে পরিচিত করিয়েছেন তাঁর শৈল্পিক দৃষ্টিভঙ্গির মাধ্যমে।" },
+            { name: "সুফিয়া কামাল", role: "কবি ও নেত্রী", desc: "বিশিষ্ট কবি এবং নারী অধিকার আন্দোলনের এক সাহসী কণ্ঠস্বর। তিনি প্রতিটি প্রগতিশীল ও গণতান্ত্রিক আন্দোলনে বলিষ্ঠ নেতৃত্ব দিয়েছেন। তাঁর কবিতা ও জীবনবোধ তরুণ প্রজন্মের জন্য এক অফুরন্ত প্রেরণা।" },
+            { name: "জহির রায়হান", role: "চলচ্চিত্রকার", desc: "ভাষা আন্দোলন ও মুক্তিযুদ্ধের অকুতোভয় সৈনিক। তাঁর 'জীবন থেকে নেয়া' চলচ্চিত্রটি বাঙালির মুক্তির সংগ্রামের এক শৈল্পিক দলিল। ১৯৭১ সালে নিখোঁজ হওয়ার আগে তিনি বাংলা সাহিত্য ও সিনেমায় বিপুল অবদান রেখে গেছেন।" },
+            { name: "সত্যেন্দ্রনাথ বসু", role: "বিজ্ঞানী", desc: "বিশ্বখ্যাত পদার্থবিজ্ঞানী, যাঁর নামে 'বোসন' কণার নামকরণ করা হয়েছে। কোয়ান্টাম মেকানিক্সে তাঁর আবিষ্কার আজ বিশ্ব পদার্থবিজ্ঞানের এক অপরিহার্য অংশ। আইনস্টাইনের সাথে তাঁর গবেষণাকর্ম সারা বিশ্বে সমাদৃত।" },
+            { name: "ড. জামাল নজরুল ইসলাম", role: "মহাকাশ বিজ্ঞানী", desc: "প্রখ্যাত মহাকাশ বিজ্ঞানী ও গণিতবিদ। মহাবিশ্বের ভবিষ্যৎ ও চূড়ান্ত পরিণতি নিয়ে তাঁর গবেষণা বিশ্বজুড়ে বিজ্ঞানীদের অবাক করে দিয়েছিল। তিনি কেমব্রিজ বিশ্ববিদ্যালয়ের সম্মানজনক শিক্ষকতা ছেড়ে দেশে ফিরে এসেছিলেন জ্ঞান চর্চার প্রসারে।" },
+            { name: "কাজী মোতাহার হোসেন", role: "পরিসংখ্যানবিদ", desc: "প্রখ্যাত পরিসংখ্যানবিদ, সাহিত্যিক ও দাবারু। তিনি বাংলাদেশে পরিসংখ্যান চর্চার পথপ্রদর্শক। যুক্তিবাদী চিন্তা এবং মুক্তবুদ্ধি চর্চার মাধ্যমে সমাজ গঠনে তাঁর ভূমিকা অপরিসীম।" },
+            { name: "সৈয়দ নজরুল ইসলাম", role: "ভারপ্রাপ্ত রাষ্ট্রপতি", desc: "মুক্তিযুদ্ধের সময় মুজিবনগর সরকারের উপ-রাষ্ট্রপতি এবং ভারপ্রাপ্ত রাষ্ট্রপতি। বঙ্গবন্ধুর অনুপস্থিতিতে তাঁর সুযোগ্য নেতৃত্বে নয় মাস রক্তক্ষয়ী যুদ্ধ পরিচালিত হয় এবং দেশ স্বাধীন হয়।" }
+        ];
+
+        const carousel = document.getElementById('carousel');
+        const numCards = personalities.length;
+        const theta = 360 / numCards;
+        const radius = Math.round((200 / 2) / Math.tan(Math.PI / numCards)) + 50;
+
+        let currAngle = 0;
+        let isDragging = false;
+        let startX, moveX;
+        let timer;
+
+        // Generate Cards
+        personalities.forEach((p, i) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            const angle = theta * i;
+            card.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
+            
+            card.innerHTML = `
+                <span class="text-[9px] text-cyan-400 font-bold uppercase tracking-widest mb-1">${p.role}</span>
+                <h3 class="text-lg font-bold text-white mb-2 leading-tight">${p.name}</h3>
+                <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-6">${p.desc}</p>
+                <div class="mt-auto flex justify-between items-center pt-3 border-t border-gray-800">
+                    <span class="text-[8px] text-gray-600">ARCHIVE #0${i+1}</span>
+                    <span class="text-[8px] text-cyan-500 font-bold">READ FULL ➔</span>
+                </div>
+            `;
+
+            card.onclick = () => {
+                if(!isDragging) openDetail(i);
+            };
+
+            carousel.appendChild(card);
+        });
+
+        function updateRotation() {
+            carousel.style.transform = `translateZ(${-radius}px) rotateY(${currAngle}deg)`;
+            
+            // Highlight current card
+            let norm = (currAngle % 360);
+            if (norm > 0) norm -= 360;
+            let activeIdx = Math.round(Math.abs(norm) / theta) % numCards;
+            
+            document.querySelectorAll('.card').forEach((c, idx) => {
+                if(idx === activeIdx) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+        }
+
+        // Detail Logic
+        function openDetail(i) {
+            const p = personalities[i];
+            document.getElementById('overlayName').innerText = p.name;
+            document.getElementById('overlayRole').innerText = p.role;
+            document.getElementById('overlayDesc').innerText = p.desc;
+            
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('scene').style.filter = "blur(10px) scale(0.9)";
+            document.getElementById('header').style.opacity = "0";
+        }
+
+        function closeDetail() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('scene').style.filter = "none";
+            document.getElementById('header').style.opacity = "1";
+        }
+
+        // Swipe Handling
+        function onStart(e) {
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+            carousel.style.transition = 'none';
+        }
+
+        function onMove(e) {
+            if(!isDragging) return;
+            moveX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+            const diff = moveX - startX;
+            currAngle += diff * 0.2; // Sensitivity
+            updateRotation();
+            startX = moveX;
+        }
+
+        function onEnd() {
+            if(!isDragging) return;
+            isDragging = false;
+            carousel.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
+            // Snap
+            currAngle = Math.round(currAngle / theta) * theta;
+            updateRotation();
+        }
+
+        // Auto-rotation
+        function tick() {
+            if(!isDragging && !document.getElementById('overlay').classList.contains('active')) {
+                currAngle -= 0.15;
+                updateRotation();
+            }
+            requestAnimationFrame(tick);
+        }
+
+        carousel.addEventListener('mousedown', onStart);
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        carousel.addEventListener('touchstart', onStart);
+        document.addEventListener('touchmove', onMove, {passive: false});
+        document.addEventListener('touchend', onEnd);
+
+        window.onload = () => {
+            updateRotation();
+            tick();
+        };
+    </script>
+</body>
+</html>
+
