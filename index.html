@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Carousel - BD Legends Full Screen View</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-glow: rgba(138, 43, 226, 0.7);
+            --accent-cyan: #00d4ff;
+            --bg-color: #030308;
+            --card-width: 240px;
+            --card-height: 350px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: 'Hind Siliguri', sans-serif;
+            overflow: hidden;
+            margin: 0;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 212, 255, 0.08), transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.08), transparent 40%);
+        }
+
+        /* Header Style */
+        .header-container {
+            position: absolute;
+            top: 40px;
+            left: 5%;
+            z-index: 10;
+            transition: opacity 0.5s ease;
+        }
+
+        .header-container.hidden-state {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .title-accent-line {
+            width: 4px;
+            height: 50px;
+            background: var(--accent-cyan);
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 15px;
+            box-shadow: 0 0 15px var(--accent-cyan);
+        }
+
+        .title-text-1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            line-height: 1;
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* 3D Scene */
+        .scene {
+            width: 100vw;
+            height: 100vh;
+            perspective: 1500px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: filter 0.5s ease;
+        }
+
+        .scene.blur-bg {
+            filter: blur(8px) brightness(0.5);
+        }
+
+        .carousel {
+            width: var(--card-width);
+            height: var(--card-height);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.2, 0, 0.2, 1);
+        }
+
+        .carousel-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(145deg, rgba(30, 30, 50, 0.9), rgba(10, 10, 20, 1));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            backface-visibility: hidden;
+            cursor: pointer;
+            transition: box-shadow 0.3s ease, border 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .carousel-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .carousel-card.active {
+            border: 1px solid var(--primary-glow);
+            box-shadow: 0 0 40px var(--primary-glow);
+        }
+
+        /* Detail Overlay */
+        .detail-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(4px);
+        }
+
+        .detail-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .detail-card {
+            width: 90%;
+            max-width: 450px;
+            max-height: 85vh;
+            background: linear-gradient(180deg, #151525 0%, #0a0a10 100%);
+            border-radius: 24px;
+            border: 1px solid rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 212, 255, 0.2);
+            padding: 40px 30px;
+            transform: scale(0.8) translateY(50px);
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-overlay.open .detail-card {
+            transform: scale(1) translateY(0);
+        }
+
+        .detail-scroll {
+            overflow-y: auto;
+            padding-right: 10px;
+            margin-top: 15px;
+        }
+
+        /* Custom Scrollbar */
+        .detail-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .detail-scroll::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        .detail-scroll::-webkit-scrollbar-thumb {
+            background: var(--accent-cyan);
+            border-radius: 10px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 35px;
+            height: 35px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #ff2a7a;
+        }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 640px) {
+            :root {
+                --card-width: 200px;
+                --card-height: 300px;
+            }
+            .detail-card {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container" id="header">
+        <div class="title-accent-line"></div>
+        <div class="main-title">
+            <div class="title-text-1">Bangladesh Legends</div>
+            <div class="text-gray-400 text-sm italic">Tap any card to read details</div>
+        </div>
+    </div>
+
+    <!-- 3D Carousel Scene -->
+    <div class="scene" id="scene">
+        <div class="carousel" id="carousel">
+            <!-- Cards via JS -->
+        </div>
+    </div>
+
+    <!-- Detail View Overlay -->
+    <div class="detail-overlay" id="detailOverlay">
+        <div class="detail-card" id="detailCard">
+            <div class="close-btn" onclick="closeDetail()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </div>
+            <div class="text-pink-500 font-bold uppercase tracking-widest text-xs mb-2" id="detailRole">ROLE</div>
+            <h2 class="text-3xl font-bold mb-4 text-white" id="detailName">Name</h2>
+            <div class="detail-scroll">
+                <p class="text-gray-300 leading-relaxed text-lg" id="detailDesc">
+                    Full detailed description goes here.
+                </p>
+                <div class="mt-8 pt-6 border-t border-gray-800 text-cyan-400 text-sm font-mono">
+                    // Historical Archive BD_001
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const personalities = [
+            { name: "বঙ্গবন্ধু শেখ মুজিবুর রহমান", role: "জাতির পিতা", desc: "স্বাধীন বাংলাদেশের স্থপতি এবং ভাষা আন্দোলন থেকে শুরু করে মুক্তিযুদ্ধ পর্যন্ত বাঙালির অবিসংবাদিত নেতা। তাঁর বলিষ্ঠ নেতৃত্বে ১৯৭১ সালে বাংলাদেশ একটি স্বাধীন রাষ্ট্র হিসেবে আত্মপ্রকাশ করে। তিনি হাজার বছরের শ্রেষ্ঠ বাঙালি। তাঁর ঐতিহাসিক ৭ই মার্চের ভাষণ বিশ্ব ঐতিহ্যের অংশ।" },
+            { name: "কাজী নজরুল ইসলাম", role: "জাতীয় কবি", desc: "বিদ্রোহী কবি হিসেবে পরিচিত। তাঁর কবিতা ও গান শোষণ, বঞ্চনা ও পরাধীনতার বিরুদ্ধে সংগ্রাম করতে আজও আমাদের অনুপ্রাণিত করে। তিনি সাম্যের গান গেয়েছেন এবং বাংলা সাহিত্যে এক নতুন ধারার সূচনা করেছেন। তাঁর রচিত গানগুলো আমাদের রণসংগীত হিসেবে স্বীকৃত।" },
+            { name: "বেগম রোকেয়া", role: "নারী জাগরণ", desc: "বাঙালি মুসলিম নারী জাগরণের অগ্রদূত। যখন নারীরা শিক্ষা থেকে অনেক দূরে ছিল, তখন তিনি নারী শিক্ষা প্রসারে তাঁর জীবন উৎসর্গ করেছিলেন। 'মতিচূর', 'সুলতানার স্বপ্ন' তাঁর কালজয়ী সাহিত্যকর্ম যা সমাজকে নতুন পথের দিশা দিয়েছে।" },
+            { name: "ড. মুহাম্মদ ইউনূস", role: "নোবেল বিজয়ী", desc: "ক্ষুদ্রঋণ ও গ্রামীণ ব্যাংকের প্রতিষ্ঠাতা। ২০০৬ সালে শান্তিতে নোবেল পুরস্কার লাভ করেন। তাঁর 'সামাজিক ব্যবসা' ধারণাটি বিশ্বজুড়ে সমাদৃত। দারিদ্র্য বিমোচনে তাঁর ভূমিকা আধুনিক অর্থনীতির একটি গুরুত্বপূর্ণ অধ্যায়।" },
+            { name: "জয়নুল আবেদিন", role: "শিল্পাচার্য", desc: "প্রখ্যাত চিত্রশিল্পী, যাঁর আঁকা তেতাল্লিশের মন্বন্তরের দুর্ভিক্ষ সংক্রান্ত ছবিগুলো বিশ্বব্যাপী সমাদৃত। তিনি সোনারগাঁওয়ে লোকশিল্প জাদুঘর এবং ঢাকায় চারুকলা ইনস্টিটিউট প্রতিষ্ঠা করেন। তাঁর শিল্পকর্ম গ্রামবাংলার মানুষের সংগ্রাম ও জীবনের প্রতিচ্ছবি।" },
+            { name: "স্যার জগদীশ চন্দ্র বসু", role: "বিজ্ঞানী", desc: "আধুনিক বিজ্ঞানের এক উজ্জ্বল নক্ষত্র। রেডিও তরঙ্গ আবিষ্কারে তাঁর মৌলিক অবদান রয়েছে। এছাড়াও তিনি প্রমাণ করেন যে উদ্ভিদের প্রাণ আছে। বিজ্ঞানে তাঁর অবদান বিশ্বজুড়ে স্বীকৃত এবং শ্রদ্ধেয়।" },
+            { name: "হুমায়ূন আহমেদ", role: "কথাশিল্পী", desc: "বাংলা সাহিত্যের অন্যতম জনপ্রিয় লেখক, নাট্যকার ও চলচ্চিত্র নির্মাতা। তাঁর কালজয়ী চরিত্র 'হিমু' ও 'মিসির আলি' এখনো কোটি পাঠকের হৃদয়ে। তিনি বাংলা সাহিত্যকে মধ্যবিত্ত বাঙালির জীবনের খুব কাছাকাছি নিয়ে এসেছিলেন।" },
+            { name: "সাকিব আল হাসান", role: "ক্রিকেটার", desc: "বিশ্বসেরা অলরাউন্ডার। বাংলাদেশ ক্রিকেটকে বিশ্বমঞ্চে এক নতুন উচ্চতায় নিয়ে গেছেন। দীর্ঘ সময় ধরে তিনি আইসিসি র‍্যাঙ্কিংয়ে শ্রেষ্ঠত্ব বজায় রেখেছেন। তিনি তরুণ প্রজন্মের জন্য এক বড় অনুপ্রেরণা।" },
+            { name: "তাজউদ্দীন আহমদ", role: "প্রথম প্রধানমন্ত্রী", desc: "মুক্তিযুদ্ধের সময় প্রবাসী সরকারের প্রধানমন্ত্রী হিসেবে অসামান্য ধৈর্য ও দক্ষতার সাথে নেতৃত্ব দেন। বাংলাদেশের স্বাধীনতার ইতিহাসে তাঁর সাংগঠনিক দক্ষতা এবং সততা স্বর্ণাক্ষরে লেখা থাকবে।" },
+            { name: "মওলানা ভাসানী", role: "জননেতা", desc: "মজলুম জননেতা হিসেবে পরিচিত। সারাজীবন শোষিত ও বঞ্চিত মানুষের অধিকার আদায়ের সংগ্রামে নেতৃত্ব দিয়েছেন। তাঁর রাজনৈতিক দূরদর্শিতা এবং দেশপ্রেম অতুলনীয়।" },
+            { name: "এফ আর খান", role: "স্থপতি", desc: "বিশ্বের গগনচুম্বী ভবন নির্মাণের জাদুকর। সিকাগোর সিয়ার্স টাওয়ারের ডিজাইন করে তিনি বিশ্বজুড়ে খ্যাতি অর্জন করেন। তাঁকে 'আইনস্টাইন অফ স্ট্রাকচারাল ইঞ্জিনিয়ারিং' বলা হয়।" },
+            { name: "জাহানারা ইমাম", role: "শহীদ জননী", desc: "একাত্তরের ঘাতক দালাল নির্মূল আন্দোলনের প্রধান নেত্রী। তাঁর 'একাত্তরের দিনগুলি' গ্রন্থটি মুক্তিযুদ্ধের এক অনন্য দলিল। তিনি আমৃত্যু যুদ্ধাপরাধীদের বিচারের দাবিতে সোচ্চার ছিলেন।" },
+            { name: "সৈয়দ নজরুল ইসলাম", role: "উপ-রাষ্ট্রপতি", desc: "মুক্তিযুদ্ধের সময় ভারপ্রাপ্ত রাষ্ট্রপতি হিসেবে দায়িত্ব পালন করেন। তাঁর বলিষ্ঠ নেতৃত্বে এবং পরিচালনায় মুক্তিযুদ্ধ একটি সফল পরিণতির দিকে এগিয়ে যায়।" },
+            { name: "সুফিয়া কামাল", role: "কবি ও নেত্রী", desc: "প্রগতিশীল সাহিত্য ও নারী অধিকার আন্দোলনের প্রধান ব্যক্তিত্ব। তিনি শুধু একজন কবিই ছিলেন না, প্রতিটি গণতান্ত্রিক আন্দোলনে রাজপথে তাঁর উপস্থিতি ছিল অনুপ্রেরণামূলক।" },
+            { name: "তারেক মাসুদ", role: "চলচ্চিত্রকার", desc: "বিশ্ববরেণ্য চলচ্চিত্রকার। তাঁর 'মাটির ময়না' চলচ্চিত্রটি কান চলচ্চিত্র উৎসবে বিশেষ পুরস্কার জয় করে। তিনি বাংলা সিনেমাকে বিশ্ব দরবারে নতুন ভাবে পরিচিত করিয়েছেন।" },
+            { name: "জহির রায়হান", role: "চলচ্চিত্রকার", desc: "ভাষা আন্দোলন ও মুক্তিযুদ্ধের অকুতোভয় সৈনিক। তাঁর 'জীবন থেকে নেয়া' চলচ্চিত্রটি বাঙালির স্বাধিকার আন্দোলনের এক অনন্য দলিল। তিনি তাঁর সৃষ্টি ও কর্মের মাঝে আজও অমর।" },
+            { name: "এ. কে. ফজলুল হক", role: "শেরেবাংলা", desc: "অবিভক্ত বাংলার জনপ্রিয় নেতা। কৃষকদের জমি ও অধিকার রক্ষায় তাঁর 'ঋণ সালিশি বোর্ড' একটি যুগান্তকারী পদক্ষেপ। তাঁর বাগ্মিতা এবং সাহস আজও স্মরণীয়।" },
+            { name: "সত্যেন্দ্রনাথ বসু", role: "পদার্থবিজ্ঞানী", desc: "বিশ্বখ্যাত পদার্থবিজ্ঞানী। 'বোস-আইনস্টাইন স্ট্যাটিস্টিকস' আবিষ্কার করে তিনি বিজ্ঞানের ইতিহাসে অমর হয়ে আছেন। আলবার্ট আইনস্টাইন স্বয়ং তাঁর কাজের ভূয়সী প্রশংসা করেছিলেন।" },
+            { name: "ড. জামাল নজরুল ইসলাম", role: "মহাকাশ বিজ্ঞানী", desc: "কেমব্রিজ বিশ্ববিদ্যালয়ের গণিত ও তাত্ত্বিক পদার্থবিদ্যার স্বনামধন্য অধ্যাপক। মহাবিশ্বের চূড়ান্ত পরিণতি নিয়ে তাঁর গবেষণা সারা বিশ্বে আলোড়ন সৃষ্টি করেছিল।" },
+            { name: "কাজী মোতাহার হোসেন", role: "বহুভাষাবিদ", desc: "বিশিষ্ট শিক্ষাবিদ ও পরিসংখ্যানবিদ। তিনি একাধারে সাহিত্যিক ও দাবারু ছিলেন। যুক্তিবাদী চিন্তা ও বিজ্ঞানমনস্ক সমাজ গঠনে তাঁর অবদান অনস্বীকার্য।" }
+        ];
+
+        const carousel = document.getElementById('carousel');
+        const numCards = personalities.length;
+        const theta = 360 / numCards;
+        let cardWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-width'));
+        let radius = Math.round((cardWidth / 2) / Math.tan(Math.PI / numCards)) + 50;
+
+        let currAngle = 0;
+        let isDragging = false;
+        let startX, currentX;
+        let animationFrameId;
+        let isDetailOpen = false;
+
+        // Create Cards
+        personalities.forEach((person, index) => {
+            const card = document.createElement('div');
+            card.classList.add('carousel-card');
+            const angle = theta * index;
+            card.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
+            
+            card.innerHTML = `
+                <div class="text-[10px] text-cyan-400 uppercase tracking-widest mb-2 font-bold">${person.role}</div>
+                <div class="text-xl font-bold text-white mb-3">${person.name}</div>
+                <div class="text-xs text-gray-400 line-clamp-5 leading-relaxed">${person.desc}</div>
+                <div class="mt-auto text-[10px] text-gray-600 border-t border-gray-800 pt-3">LEGEND #${index+1}</div>
+            `;
+
+            card.onclick = (e) => {
+                if(!isDragging) openDetail(index);
+            };
+
+            carousel.appendChild(card);
+        });
+
+        function applyRotation() {
+            carousel.style.transform = `translateZ(${-radius}px) rotateY(${currAngle}deg)`;
+            
+            // Highlight front card
+            let normalizedAngle = (currAngle % 360);
+            if (normalizedAngle > 0) normalizedAngle -= 360;
+            let activeIndex = Math.round(Math.abs(normalizedAngle) / theta) % numCards;
+
+            const cards = document.querySelectorAll('.carousel-card');
+            cards.forEach((card, i) => {
+                if(i === activeIndex) card.classList.add('active');
+                else card.classList.remove('active');
+            });
+        }
+
+        // Detail View Logic
+        function openDetail(index) {
+            isDetailOpen = true;
+            const p = personalities[index];
+            document.getElementById('detailName').innerText = p.name;
+            document.getElementById('detailRole').innerText = p.role;
+            document.getElementById('detailDesc').innerText = p.desc;
+            
+            document.getElementById('detailOverlay').classList.add('open');
+            document.getElementById('scene').classList.add('blur-bg');
+            document.getElementById('header').classList.add('hidden-state');
+            
+            cancelAnimationFrame(animationFrameId);
+        }
+
+        function closeDetail() {
+            isDetailOpen = false;
+            document.getElementById('detailOverlay').classList.remove('open');
+            document.getElementById('scene').classList.remove('blur-bg');
+            document.getElementById('header').classList.remove('hidden-state');
+            startAutoRotate();
+        }
+
+        // Interaction Handling
+        function handleStart(e) {
+            if(isDetailOpen) return;
+            isDragging = true;
+            startX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+            cancelAnimationFrame(animationFrameId);
+            carousel.style.transition = 'none';
+        }
+
+        function handleMove(e) {
+            if (!isDragging || isDetailOpen) return;
+            currentX = e.type.includes('mouse') ? e.pageX : e.touches[0].clientX;
+            const diff = currentX - startX;
+            currAngle += diff * 0.25;
+            applyRotation();
+            startX = currentX;
+        }
+
+        function handleEnd() {
+            if(!isDragging) return;
+            isDragging = false;
+            carousel.style.transition = 'transform 0.8s cubic-bezier(0.2, 0, 0.2, 1)';
+            currAngle = Math.round(currAngle / theta) * theta;
+            applyRotation();
+            if(!isDetailOpen) startAutoRotate();
+        }
+
+        // Auto Rotate
+        function autoRotate() {
+            if (!isDragging && !isDetailOpen) {
+                currAngle -= 0.1;
+                applyRotation();
+            }
+            animationFrameId = requestAnimationFrame(autoRotate);
+        }
+
+        function startAutoRotate() {
+            cancelAnimationFrame(animationFrameId);
+            autoRotate();
+        }
+
+        // Initialize
+        carousel.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        carousel.addEventListener('touchstart', handleStart);
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
+
+        // Close on background click
+        document.getElementById('detailOverlay').onclick = function(e) {
+            if(e.target === this) closeDetail();
+        };
+
+        window.onload = () => {
+            applyRotation();
+            startAutoRotate();
+        };
+
+        // Resize support
+        window.addEventListener('resize', () => {
+            cardWidth = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--card-width'));
+            radius = Math.round((cardWidth / 2) / Math.tan(Math.PI / numCards)) + 50;
+            const cards = document.querySelectorAll('.carousel-card');
+            cards.forEach((card, index) => {
+                const angle = theta * index;
+                card.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
+            });
+            applyRotation();
+        });
+    </script>
+</body>
+</html>
+
